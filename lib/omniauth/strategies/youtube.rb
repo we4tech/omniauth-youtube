@@ -19,18 +19,19 @@ module OmniAuth
 
       uid { user['id']['$t'] }
 
+      # Now it requires active_support (since i'm using try)
       info do
         {
           'uid' => user['id']['$t'],
-          'nickname' => user['author'].first['name']['$t'],
+          'nickname' => user['author'].try(:first).try(:[], 'name').try(:[], '$t'),
           'email'      => verified_email,
           'first_name' => user['yt$firstName'] && user['yt$firstName']['$t'],
           'last_name' => user['yt$lastName'] && user['yt$lastName']['$t'],
           'image' => user['media$thumbnail'] && user['media$thumbnail']['url'],
           'description' => user['yt$description'] && user['yt$description']['$t'],
           'location' => user['yt$location'] && user['yt$location']['$t'],
-          'channel_title' => user['title']['$t'],
-          'subscribers_count' => user['yt$statistics']['subscriberCount']
+          'channel_title' => user['title'].try(:[], '$t'),
+          'subscribers_count' => user['yt$statistics'].try(:[], 'subscriberCount')
         }
       end
 
@@ -43,7 +44,17 @@ module OmniAuth
       end
 
       def user_hash
-        @user_hash ||= MultiJson.decode(@access_token.get("http://gdata.youtube.com/feeds/api/users/default?alt=json").body)
+        @user_hash ||= begin
+          if authorize_params.scope.split(/\s+/).include?('gdata.youtube.com')
+            MultiJson.decode(@access_token.get("http://gdata.youtube.com/feeds/api/users/default?alt=json").body)
+          else
+            {
+                'entry' => {
+                    'id' => { '$t' => @access_token.token }
+                }
+            }
+          end
+        end
       end
 
       def user_info
