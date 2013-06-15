@@ -1,3 +1,13 @@
+WHY!
+=====
+
+In our context, we actually don't need 'http://gdata.youtube.com' privilege. It seems too much for us.
+Since the original version is depending on it we had no other way out except patch the code.
+
+So now if you add 'http://gdata.youtube.com' scope it will behave as the original version otherwise 
+it won't mind and won't throw up any exception.
+
+
 OmniAuth YouTube
 ================
 
